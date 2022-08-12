@@ -1,6 +1,6 @@
 public class Constant {
 
-    public static final int HEADER_LENGTH = 71; //magic string + nonce + salt + hmac (in bytes)
+    public static final int HEADER_LENGTH = 51; //magic string + nonce + salt + hmac (in bytes)
     public static final int HMAC_LENGTH = 20; //Length of an hmac in bytes
     public static final int NONCE_IV_LENGTH = 12; //Lenght of a nonce in bytes
     public static final int SALT_LENGTH = 16; // Length of a salt in bytes

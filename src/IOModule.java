@@ -17,7 +17,7 @@ public class IOModule {
         setEncrypted();
     }
     //Writes Header to .temp file
-    public static void writeHeader(byte[] nonce_iv, byte[] salt, byte[] macBytes, String path){
+    public static void writeHeader(byte[] nonce_iv, byte[] salt, String path){
 
         //Write MagicString to .temp
         try(BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(path.concat(".temp")))){
@@ -32,7 +32,6 @@ public class IOModule {
 
             out2.write(nonce_iv);
             out2.write(salt);
-            out2.write(macBytes);
 
         }catch(Exception e){
             System.out.println("Exception occured while writing header of:\n"+path);
@@ -45,8 +44,7 @@ public class IOModule {
         byte[]
                 serializedHeader,
                 nonce = new byte[Constant.NONCE_IV_LENGTH],
-                salt = new byte[Constant.SALT_LENGTH],
-                hmacBytes = new byte[Constant.HMAC_LENGTH];
+                salt = new byte[Constant.SALT_LENGTH];
 
         //read the serialized Header without Magic-String
         serializedHeader = new byte[Constant.HEADER_LENGTH-Constant.MAGIC_STRING_LENGTH];
@@ -55,8 +53,7 @@ public class IOModule {
             in.skip(Constant.MAGIC_STRING_LENGTH);
             serializedHeader = in.readNBytes(
                         Constant.NONCE_IV_LENGTH+
-                            Constant.SALT_LENGTH+
-                            Constant.HMAC_LENGTH);
+                            Constant.SALT_LENGTH);
             
         }catch(Exception e){
             System.out.println("Exception occured while reading header of:\n"+path);
@@ -67,11 +64,10 @@ public class IOModule {
                 nonce,0 ,Constant.NONCE_IV_LENGTH);
         System.arraycopy(serializedHeader, Constant.NONCE_IV_LENGTH,
                 salt,0 ,Constant.SALT_LENGTH);
-        System.arraycopy(serializedHeader, Constant.NONCE_IV_LENGTH + Constant.SALT_LENGTH,
-                hmacBytes,0 , Constant.HMAC_LENGTH);
+
         
         //return header
-        return new byte[][]{nonce,salt,hmacBytes};
+        return new byte[][]{nonce,salt};
     }
     public static void safelyDeleteOriginal(String path) {
         byte[] zerobytes = new byte[1000];
@@ -118,6 +114,39 @@ public class IOModule {
         File oldFile = new File(oldName);
         File newFile = new File(newName);
         oldFile.renameTo(newFile);
+    }
+    //appends the mac to the .temp file
+    public static void writeHMac(byte[] macBytes, String path) {
+        try(BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(path.concat(".temp"), true))){
+            out.write(macBytes);
+        }catch(Exception e){
+            System.out.println("An Exception occured while appending mac to temp file of:\n"+path);
+        }
+    }
+    //TODO
+    public static byte[] readMac(String path) {
+        long fileSize = 0;
+        //init
+        byte[] hmac = new byte[Constant.HMAC_LENGTH];
+        //get file size
+        try{
+            FileInputStream inputStream = new FileInputStream(path);
+            FileChannel channel = inputStream.getChannel();
+            fileSize = channel.size();
+            channel.close();
+            inputStream.close();
+
+        }catch (Exception e){
+            System.out.println("An Exception occured while reading the hmac of:\n"+path);
+        }
+        //read
+        try(BufferedInputStream in = new BufferedInputStream(new FileInputStream(path))){
+            in.skip(fileSize - Constant.HMAC_LENGTH);
+            hmac = in.readNBytes(Constant.HMAC_LENGTH);
+        }catch (Exception e){
+            System.out.println("An Exception occured while reading the hmac of:\n"+path);
+        }
+        return hmac;
     }
 
     //return the number of Files in the folder

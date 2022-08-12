@@ -1,11 +1,10 @@
 import javax.crypto.Mac;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 
 public class Worker extends Thread{
     private final char[] password;
@@ -21,7 +20,7 @@ public class Worker extends Thread{
         this.password = password;
         this.crypt = new CryptographyModule();
     }
-    //TODO
+
     @Override
     public void run(){
 
@@ -37,7 +36,7 @@ public class Worker extends Thread{
                 }
                 byte[] nonce_iv = crypt.getIV_Nonce();
                 byte[] salt = crypt.getSalt();
-                byte[] macBytes;
+                byte[] macBytes = new byte[0];
 
                 //derive macKey from password with 10000 iterations
                 Key macKey = new SecretKeySpec(crypt.PKDF2(password, salt, Constant.MAC_KEY_LENGTH, Constant.MAC_KEY_ITERATIONS), "HMACSHA1");
@@ -47,10 +46,16 @@ public class Worker extends Thread{
                 } catch (InvalidKeyException e) {
                     throw new RuntimeException(e);
                 }
-                //----------------write nonce salt and hmac to Header with .temp extension
-                IOModule.writeHeader(nonce_iv, salt, macBytes, paths[currentFileIndex]);
+                //----------------write nonce salt to Header with .temp extension
+                IOModule.writeHeader(nonce_iv, salt, paths[currentFileIndex]);
                 //----------------r/encrypt/w file and get hmac
-                macBytes = crypt.encrypt(paths[currentFileIndex], password, nonce_iv, salt, mac);
+                try {
+                    macBytes = crypt.encrypt(paths[currentFileIndex], password, nonce_iv, salt, mac);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //write hmac
+                IOModule.writeHMac(macBytes, paths[currentFileIndex]);
                 //overwrite original and change name
                 IOModule.safelyDeleteOriginal(paths[currentFileIndex]);
                 IOModule.rename(paths[currentFileIndex].concat("temp"), paths[currentFileIndex]);
@@ -59,8 +64,8 @@ public class Worker extends Thread{
                 byte[][] encData = IOModule.readHeader(paths[currentFileIndex]);//
                 byte[] nonce_iv = encData[0];
                 byte[] salt = encData[1];
-                byte[] macBytes = encData[2];
-                byte[] newMacBytes;
+                byte[] macBytes = IOModule.readMac(paths[currentFileIndex]);
+                byte[] newMacBytes = new byte[0];
                 Mac mac = null;
                 try {
                     mac = Mac.getInstance("HMACSHA1");
@@ -74,7 +79,11 @@ public class Worker extends Thread{
                     throw new RuntimeException(e);
                 }
                 //----------------decrypt file and get hmac
-                newMacBytes = crypt.decrypt(paths[currentFileIndex], password, nonce_iv, salt, mac);
+                try {
+                    newMacBytes = crypt.decrypt(paths[currentFileIndex], password, nonce_iv, salt, mac);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 //----------------check integrity
                 for(int i = 0; i < Constant.HMAC_LENGTH; i++){
                     if(newMacBytes[i] != macBytes[i]){
