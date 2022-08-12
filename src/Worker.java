@@ -40,17 +40,20 @@ public class Worker extends Thread{
                 byte[] macBytes;
 
                 //derive macKey from password with 10000 iterations
-                Key macKey = new SecretKeySpec(crypt.PKDF2(password, salt, 128, 10000), "HMACSHA1");
+                Key macKey = new SecretKeySpec(crypt.PKDF2(password, salt, Constant.MAC_KEY_LENGTH, Constant.MAC_KEY_ITERATIONS), "HMACSHA1");
 
                 try {
                     mac.init(macKey);
                 } catch (InvalidKeyException e) {
                     throw new RuntimeException(e);
                 }
+                //----------------write nonce salt and hmac to Header with .temp extension
+                IOModule.writeHeader(nonce_iv, salt, macBytes, paths[currentFileIndex]);
                 //----------------r/encrypt/w file and get hmac
                 macBytes = crypt.encrypt(paths[currentFileIndex], password, nonce_iv, salt, mac);
-                //----------------write nonce salt and hmac to .encData File
-                IOModule.writeHeader(nonce_iv, salt, macBytes, paths[currentFileIndex]);
+                //overwrite original and change name
+                IOModule.safelyDeleteOriginal(paths[currentFileIndex]);
+                IOModule.rename(paths[currentFileIndex].concat("temp"), paths[currentFileIndex]);
             } else {//         --------------------------------if the folder is encrypted
                 //----------------get nonce, salt, hmac, hmacKey
                 byte[][] encData = IOModule.readHeader(paths[currentFileIndex]);//

@@ -6,6 +6,7 @@ public class Constant {
     public static final int SALT_LENGTH = 16; // Length of a salt in bytes
     public static final int ANSWER_TO_EVERYTHING = 42; // always true
     public static final String MAGIC_STRING = "jghsvbfhnsdkbjgfhvnkdgb";
+    public static final byte[] MAGIC_STRING_BYTES = "jghsvbfhnsdkbjgfhvnkdgb".getBytes();
     public static final int MAGIC_STRING_LENGTH = 23;
     public static final int CHACHA_KEY_LENGTH = 256;//keylength of all ciphers
     public static final int KEY_ITERATIONS = 20000;//Iterations, that will be used for deriving the cipher key
