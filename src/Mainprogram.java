@@ -12,7 +12,7 @@ public class Mainprogram {
         //Add BC Provider;
         Security.addProvider(new BouncyCastleProvider());
 
-        String path = "/home/robin/Dokumente/eclipse-workspace";
+        String path = "C:\\Users\\Robin\\Desktop\\Testdaten";
         IOModule io = new IOModule(path);
         int numOfFiles = io.getNumOfFiles();
         String[] filePaths = io.getAllPaths();
@@ -51,6 +51,6 @@ public class Mainprogram {
         for(String i : filePaths){
             System.out.println(i);
         }
-
+        System.out.println(Constant.MAGIC_STRING_LENGTH);
     }
 }

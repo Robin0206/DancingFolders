@@ -10,10 +10,10 @@ public class IOModule {
         paths = getPaths(path, new ArrayList<String>());
     }
     //TODO
-    public static void writeEncData(byte[] nonce_iv, byte[] salt, byte[] macBytes, String path) {
+    public static void writeHeader(byte[] nonce_iv, byte[] salt, byte[] macBytes, String path) {
     }
     //TODO
-    public static byte[][] readEncData(String path) {
+    public static byte[][] readHeader(String path) {
         return new byte[0][0];
     }
 

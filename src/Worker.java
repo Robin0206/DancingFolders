@@ -50,13 +50,13 @@ public class Worker extends Thread{
                 //----------------r/encrypt/w file and get hmac
                 macBytes = crypt.encrypt(paths[currentFileIndex], password, nonce_iv, salt, mac);
                 //----------------write nonce salt and hmac to .encData File
-                IOModule.writeEncData(nonce_iv, salt, macBytes, paths[currentFileIndex]);
+                IOModule.writeHeader(nonce_iv, salt, macBytes, paths[currentFileIndex]);
             } else {//         --------------------------------if the folder is encrypted
                 //----------------get nonce, salt, hmac, hmacKey
-                byte[][] encData = IOModule.readEncData(paths[currentFileIndex]);//
-                byte[] nonce_iv = encData[1];
-                byte[] salt = encData[2];
-                byte[] macBytes = encData[3];
+                byte[][] encData = IOModule.readHeader(paths[currentFileIndex]);//
+                byte[] nonce_iv = encData[0];
+                byte[] salt = encData[1];
+                byte[] macBytes = encData[2];
                 byte[] newMacBytes;
                 Mac mac = null;
                 try {
